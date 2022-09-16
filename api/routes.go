@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -182,7 +183,6 @@ func reduceEvents(events Events) []CompactEvent {
 
 func getTicketmasterConcerts() []CompactEvent {
 	var shows Events
-	var shows2 Events
 
 	seattle := geohash.Encode(47.5, -122)
 	seattle = seattle[:5]
@@ -198,21 +198,25 @@ func getTicketmasterConcerts() []CompactEvent {
 	if err != nil {
 		log.Println(err)
 	}
-
-	resp2, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
-	if err != nil {
-		return []CompactEvent{}
-	}
-	contents2, err := ioutil.ReadAll(resp2.Body)
-	if err != nil {
-		return []CompactEvent{}
-	}
-	err = json.Unmarshal(contents2, &shows2)
-	if err != nil {
-		log.Println(err)
-	}
 	redEvents := reduceEvents(shows)
-	redEvents2 := append(redEvents, reduceEvents(shows2)...)
 
-	return redEvents2
+	for i := 1; i < 3; i++ {
+		var shows2 Events
+
+		resp2, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&page=" + strconv.Itoa(i) + "&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
+		if err != nil {
+			return []CompactEvent{}
+		}
+		contents2, err := ioutil.ReadAll(resp2.Body)
+		if err != nil {
+			return []CompactEvent{}
+		}
+		err = json.Unmarshal(contents2, &shows2)
+		if err != nil {
+			log.Println(err)
+		}
+
+		redEvents = append(redEvents, reduceEvents(shows2)...)
+	}
+	return redEvents
 }
