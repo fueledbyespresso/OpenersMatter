@@ -21,37 +21,7 @@ func Routes(r *gin.RouterGroup, db *database.DB) {
 }
 
 func resourceRoute(r *gin.RouterGroup, db *database.DB) {
-	r.GET("/concertsO", overlappedContent(db))
 	r.GET("/concerts", getConcerts(db))
-}
-
-func overlappedContent(db *database.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var artists resp
-
-		session, err := db.SessionStore.Get(c.Request, "session")
-		if err != nil {
-			c.AbortWithStatusJSON(500, "The server was unable to retrieve this session")
-			return
-		}
-		spotifyID := session.Values["SpotifyID"]
-
-		accessTokenRow, err := db.Db.Query(`SELECT access_token from account WHERE spotify_id=$1`, spotifyID)
-		if err != nil {
-			database.CheckDBErr(err.(*pq.Error), c)
-			return
-		}
-		var accessToken string
-		for accessTokenRow.Next() {
-			err = accessTokenRow.Scan(&accessToken)
-			if err != nil {
-				c.AbortWithStatusJSON(500, "The server was unable to retrieve school info")
-			}
-		}
-		getTopSpotifyArtists(&artists, accessToken)
-
-		c.JSON(200, "test")
-	}
 }
 
 type following struct {

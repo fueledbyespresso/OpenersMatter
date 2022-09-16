@@ -1,26 +1,103 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, {useEffect, useState} from 'react';
 import './App.css';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [user, setUser] = useState<string | null>(null)
+    const [loadingConcerts, setLoadingConcerts] = useState<boolean>(false)
+    const [concerts, setConcerts] = useState<any | null>(null)
+    const [error, setError] = useState<string | null>(null)
+
+    useEffect(() => {
+        // Refresh session every 10 minutes
+        setInterval(refreshSession, 600000)
+        // Listen to localstorage changes
+        // Update user on change
+        window.addEventListener('storage', () => {
+            setUser(JSON.parse(localStorage.getItem("user") || ""))
+        });
+
+        //Fetch user from api
+        fetch("/oauth/v1/account")
+            .then((res) => {
+                if (res.ok) {
+                    return res.json()
+                }
+            })
+            .then(
+                (result) => {
+                    setUser(result);
+                    localStorage.setItem("user", JSON.stringify(result))
+                }, (error) => {
+                    setUser(null)
+                    localStorage.removeItem("user")
+                    setError(error);
+                }
+            )
+    }, [])
+
+    function refreshSession() {
+        fetch("/oauth/v1/refresh")
+            .then((res) => {
+                if (!res.ok) {
+                    setError(`Unable to refresh session`)
+                }
+            })
+    }
+
+    function getConcerts() {
+        setLoadingConcerts(true)
+        fetch("/api/v1/concerts")
+            .then((res) => {
+                if (res.ok) {
+                    setLoadingConcerts(false)
+                    return res.json()
+                }
+            })
+            .then(
+                (result) => {
+                    setConcerts(result)
+                }, (error) => {
+                    setConcerts(null)
+                    setError(error);
+                }
+            )
+    }
+
+    return (
+        <div className="App">
+            {user ? (
+                <div>
+                    <label>
+                        Longitude
+                        <input placeholder={"Longitude"}/>
+                    </label>
+                    <label>
+                        Latitude
+                        <input placeholder={"Latitude"}/>
+                    </label>
+                    <label>
+                        Radius
+                        <input placeholder={"Radius"}/>
+                    </label>
+                    {loadingConcerts && <div>Loading Concerts</div>}
+                    {concerts && (
+                        Object.keys(concerts).map((key,val) => {
+                            return (
+                                concerts[key] &&(
+                                        <div key={key}>
+                                            {key}: {concerts[key]}
+                                        </div>
+                                    )
+                            );
+                        })
+                    )}
+                    <button onClick={() => getConcerts()}>Find Concerts</button>
+                </div>
+            ) : (
+                <a href={"./oauth/v1/login"}>Login</a>
+            )}
+        </div>
+    );
 }
 
 export default App;
