@@ -4,6 +4,7 @@ import (
 	"OpenersMatter/database"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -14,8 +15,10 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -76,8 +79,8 @@ func handleSpotifyLogin(db *database.DB) gin.HandlerFunc {
 			c.AbortWithStatusJSON(500, "Unable to store state data")
 		}
 
-		url := SpotifyOauthConfig.AuthCodeURL(stateString)
-		c.Redirect(http.StatusTemporaryRedirect, url)
+		redirectCallbackURL := SpotifyOauthConfig.AuthCodeURL(stateString)
+		c.Redirect(http.StatusTemporaryRedirect, redirectCallbackURL)
 	}
 
 }
@@ -136,14 +139,14 @@ func handleSpotifyCallback(db *database.DB) gin.HandlerFunc {
 
 func createUser(userData User, db *database.DB) error {
 	// Prepare the sql query for later
-	insert, err := db.Db.Prepare(`INSERT INTO account (email, access_token, spotify_id, expires_in, picture, name) VALUES ($1, $2, $3, $4, $5, $6)`)
+	insert, err := db.Db.Prepare(`INSERT INTO account (email, access_token, refresh_token, spotify_id, expires_in, picture, name) VALUES ($1, $2, $3, $4, $5, $6, $7)`)
 	if err != nil {
 		return err
 	}
 
 	//Execute the previous sql query using data from the
 	// userData struct being passed into the function
-	_, err = insert.Exec(userData.Email, userData.AccessToken, userData.SpotifyID, userData.ExpiresIn, userData.Picture, userData.Name)
+	_, err = insert.Exec(userData.Email, userData.AccessToken, userData.RefreshToken, userData.SpotifyID, userData.ExpiresIn, userData.Picture, userData.Name)
 
 	if err != nil {
 		return err
@@ -168,20 +171,21 @@ func checkCount(rows *sql.Rows) (count int) {
 }
 
 func replaceAccessToken(userData User, db *database.DB) {
-	_, err := db.Db.Query("UPDATE account SET access_token=$1, expires_in=$2, picture=$3, name=$4 WHERE email = $5",
-		userData.AccessToken, userData.ExpiresIn, userData.Picture, userData.Name, userData.Email)
+	_, err := db.Db.Query("UPDATE account SET access_token=$1, refresh_token=$2,expires_in=$3, picture=$4, name=$5 WHERE email = $6",
+		userData.AccessToken, userData.RefreshToken, userData.ExpiresIn, userData.Picture, userData.Name, userData.Email)
 	if err != nil {
 		fmt.Println("Unable to update access token", err)
 	}
 }
 
 type User struct {
-	SpotifyID   string    `json:"id"`
-	Email       string    `json:"email"`
-	Name        string    `json:"display_name"`
-	Picture     string    `json:"picture"`
-	ExpiresIn   time.Time `json:"expires_in"`
-	AccessToken string    `json:"access_token"`
+	SpotifyID    string    `json:"id"`
+	Email        string    `json:"email"`
+	Name         string    `json:"display_name"`
+	Picture      string    `json:"picture"`
+	ExpiresIn    time.Time `json:"expires_in"`
+	AccessToken  string    `json:"access_token"`
+	RefreshToken string    `json:"refresh_token"`
 }
 
 func getUserInfo(state string, code string, r *http.Request) (User, error) {
@@ -192,6 +196,7 @@ func getUserInfo(state string, code string, r *http.Request) (User, error) {
 	}
 
 	token, err := SpotifyOauthConfig.Exchange(context.Background(), code)
+	fmt.Println(token.RefreshToken)
 	if err != nil {
 		return userData, fmt.Errorf("code exchange failed: %s", err.Error())
 	}
@@ -217,6 +222,7 @@ func getUserInfo(state string, code string, r *http.Request) (User, error) {
 
 	userData.ExpiresIn = token.Expiry
 	userData.AccessToken = token.AccessToken
+	userData.RefreshToken = token.RefreshToken
 	return userData, nil
 }
 
@@ -262,6 +268,13 @@ func refreshSession(db *database.DB) gin.HandlerFunc {
 			return
 		}
 
+		spotifyID := session.Values["SpotifyID"]
+
+		err = refreshSpotifyToken(db, fmt.Sprintf("%v", spotifyID))
+		if err != nil {
+			c.AbortWithStatusJSON(500, "The server was unable to refresh Spotify session")
+			return
+		}
 		if session.ID != "" {
 			session.Options.MaxAge = 3600
 
@@ -275,6 +288,34 @@ func refreshSession(db *database.DB) gin.HandlerFunc {
 			c.Redirect(http.StatusTemporaryRedirect, "./login")
 		}
 	}
+}
+
+func refreshSpotifyToken(db *database.DB, spotifyID string) error {
+	var token oauth2.Token
+
+	data := url.Values{}
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", "bar")
+	req, _ := http.NewRequest("GET", "https://accounts.spotify.com/api/token", strings.NewReader(data.Encode()))
+	base64EncHeader := base64.StdEncoding.EncodeToString([]byte(os.Getenv("SPOTIFY_CLIENT_ID") + ":" + os.Getenv("SPOTIFY_CLIENT_SECRET")))
+	req.Header.Set("Authorization", "Basic "+base64EncHeader)
+	client := &http.Client{}
+	response, err := client.Do(req)
+	contents, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(contents, &token)
+	if err != nil {
+		log.Println(err)
+	}
+
+	_, err = db.Db.Query("UPDATE account SET refresh_token=$1 WHERE spotify_id = $1", spotifyID)
+	if err != nil {
+		fmt.Println("Unable to update access token", err)
+	}
+
+	return nil
 }
 
 func getAccount(db *database.DB) gin.HandlerFunc {

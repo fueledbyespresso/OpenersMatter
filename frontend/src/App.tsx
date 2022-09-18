@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import './App.css';
+import './app.scss';
 
 function App() {
     const [user, setUser] = useState<string | null>(null)
@@ -66,7 +66,7 @@ function App() {
     return (
         <div className="App">
             {user ? (
-                <div>
+                <div className={"main"}>
                     <label>
                         Longitude
                         <input placeholder={"Longitude"}/>
@@ -80,16 +80,19 @@ function App() {
                         <input placeholder={"Radius"}/>
                     </label>
                     {loadingConcerts && <div>Loading Concerts</div>}
+
                     {concerts && (
-                        Object.keys(concerts).map((key,val) => {
-                            return (
-                                concerts[key] &&(
-                                        <div key={key}>
+                        <div className="concerts">
+                            {Object.keys(concerts).map((key, val) => {
+                                return (
+                                    concerts[key] && (
+                                        <div key={key} className={"concert-card"}>
                                             {key}: {concerts[key]}
                                         </div>
                                     )
-                            );
-                        })
+                                );
+                            })}
+                        </div>
                     )}
                     <button onClick={() => getConcerts()}>Find Concerts</button>
                 </div>

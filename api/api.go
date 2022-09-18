@@ -24,19 +24,23 @@ func resourceRoute(r *gin.RouterGroup, db *database.DB) {
 	r.GET("/concerts", getConcerts(db))
 }
 
-type following struct {
-	Artists resp `json:"artists"`
+type followingJSONResponse struct {
+	Artists artistsJSONField `json:"artists"`
 }
 
-type resp struct {
-	Href  string   `json:"href"`
-	Items []artist `json:"items"`
-}
-type artist struct {
-	Name string `json:"name"`
+type artistsJSONField struct {
+	Href  string `json:"href"`
+	Items []struct {
+		Name   string `json:"name"`
+		Images []struct {
+			Height int
+			Width  int
+			URL    string
+		} `json:"images"`
+	} `json:"items"`
 }
 
-func getTopSpotifyArtists(artists *resp, accessToken string) {
+func getTopSpotifyArtists(artists *artistsJSONField, accessToken string) {
 	req, _ := http.NewRequest("GET", "https://api.spotify.com/v1/me/top/artists?limit=50", nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	client := &http.Client{}
@@ -51,7 +55,7 @@ func getTopSpotifyArtists(artists *resp, accessToken string) {
 	}
 }
 
-func getFollowedArtists(followingArtists *following, accessToken string) {
+func getFollowedArtists(followingArtists *followingJSONResponse, accessToken string) {
 	req, _ := http.NewRequest("GET", "https://api.spotify.com/v1/me/following?type=artist&limit=50", nil)
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	client := &http.Client{}
@@ -66,10 +70,43 @@ func getFollowedArtists(followingArtists *following, accessToken string) {
 	}
 }
 
+func getImportantEvents(accessToken string) []events {
+	var topArtists artistsJSONField
+	var followingArtist followingJSONResponse
+
+	getTopSpotifyArtists(&topArtists, accessToken)
+	getFollowedArtists(&followingArtist, accessToken)
+	allArtists := make(map[string]bool)
+	for _, item := range topArtists.Items {
+		allArtists[strings.ToLower(item.Name)] = true
+	}
+	for _, item := range followingArtist.Artists.Items {
+		allArtists[strings.ToLower(item.Name)] = true
+	}
+	allEvents := getTicketmasterConcerts()
+	var curatedEvents []events
+	for _, event := range allEvents {
+		tempEvent := events{
+			Name:        event.Name,
+			URL:         event.URL,
+			Attractions: event.Attractions,
+		}
+		hasFavoriteArtist := false
+		for playingArtist := range event.Attractions {
+			if _, isPlaying := allArtists[strings.ToLower(playingArtist)]; isPlaying {
+				tempEvent.Attractions[playingArtist] = true
+				hasFavoriteArtist = true
+			}
+		}
+		if hasFavoriteArtist {
+			curatedEvents = append(curatedEvents, tempEvent)
+		}
+	}
+	return curatedEvents
+}
+
 func getConcerts(db *database.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var artists resp
-		var followingArtist following
 		session, err := db.SessionStore.Get(c.Request, "session")
 		if err != nil {
 			c.AbortWithStatusJSON(500, "The server was unable to retrieve this session")
@@ -89,104 +126,79 @@ func getConcerts(db *database.DB) gin.HandlerFunc {
 				c.AbortWithStatusJSON(500, "The server was unable to retrieve school info")
 			}
 		}
-		getTopSpotifyArtists(&artists, accessToken)
-		getFollowedArtists(&followingArtist, accessToken)
-		favArtists := make(map[string]string)
-		for _, item := range artists.Items {
-			favArtists[strings.ToLower(item.Name)] = ""
-		}
-		for _, item := range followingArtist.Artists.Items {
-			favArtists[strings.ToLower(item.Name)] = ""
-		}
-		events := getTicketmasterConcerts()
-		for _, compactEvent := range events {
-			for _, artistPlaying := range compactEvent.Attractions {
-				if _, ok := favArtists[strings.ToLower(artistPlaying)]; ok {
-					favArtists[strings.ToLower(artistPlaying)] = compactEvent.Name
-				}
-			}
-		}
-		c.JSON(200, favArtists)
+		allEvents := getImportantEvents(accessToken)
+		c.JSON(200, allEvents)
 	}
 }
 
-type Events struct {
+type eventsResponseJSON struct {
 	Embedded struct {
-		Events []event `json:"events"`
+		Events []eventFieldJSON `json:"events"`
 	} `json:"_embedded"`
 }
 
-type event struct {
+type eventFieldJSON struct {
 	Name        string `json:"name"`
+	URL         string `json:"url"`
 	Attractions struct {
-		Attractions []attraction
+		Attractions []attractionFieldJSON `json:"attractions"`
 	} `json:"_embedded"`
 }
 
-type attraction struct {
+type attractionFieldJSON struct {
 	Name string `json:"name"`
 }
 
-type CompactEvent struct {
+type events struct {
 	Name        string `json:"name"`
-	Attractions []string
+	URL         string `json:"url"`
+	Attractions map[string]bool
 }
 
-func reduceEvents(events Events) []CompactEvent {
-	var compactEvents []CompactEvent
+func removeExcessDetails(eventsJSON eventsResponseJSON) []events {
+	var compactEvents []events
 
-	for _, event := range events.Embedded.Events {
+	for _, event := range eventsJSON.Embedded.Events {
 		var attractions []string
 		for _, attraction := range event.Attractions.Attractions {
 			attractions = append(attractions, attraction.Name)
 		}
-		formatted := CompactEvent{
+		formatted := events{
 			Name:        event.Name,
-			Attractions: attractions,
+			URL:         event.URL,
+			Attractions: make(map[string]bool),
+		}
+		for _, attraction := range attractions {
+			formatted.Attractions[attraction] = false
 		}
 
 		compactEvents = append(compactEvents, formatted)
 	}
-
 	return compactEvents
 }
 
-func getTicketmasterConcerts() []CompactEvent {
-	var shows Events
-
+func getTicketmasterConcerts() []events {
+	var allEvents []events
 	seattle := geohash.Encode(47.5, -122)
 	seattle = seattle[:5]
-	resp, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
-	if err != nil {
-		return []CompactEvent{}
-	}
-	contents, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return []CompactEvent{}
-	}
-	err = json.Unmarshal(contents, &shows)
-	if err != nil {
-		log.Println(err)
-	}
-	redEvents := reduceEvents(shows)
 
-	for i := 1; i < 3; i++ {
-		var shows2 Events
+	for i := 0; i < 3; i++ {
+		var eventsJSON eventsResponseJSON
 
-		resp2, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&page=" + strconv.Itoa(i) + "&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
+		resp, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&page=" + strconv.Itoa(i) + "&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
 		if err != nil {
-			return []CompactEvent{}
+			return []events{}
 		}
-		contents2, err := ioutil.ReadAll(resp2.Body)
+		contents, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return []CompactEvent{}
+			return []events{}
 		}
-		err = json.Unmarshal(contents2, &shows2)
+		err = json.Unmarshal(contents, &eventsJSON)
 		if err != nil {
 			log.Println(err)
 		}
 
-		redEvents = append(redEvents, reduceEvents(shows2)...)
+		allEvents = append(allEvents, removeExcessDetails(eventsJSON)...)
 	}
-	return redEvents
+	return allEvents
 }

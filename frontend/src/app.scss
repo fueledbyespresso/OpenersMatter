@@ -36,3 +36,30 @@
         transform: rotate(360deg);
     }
 }
+
+.main{
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+
+    label{
+        width:40em;
+        input{
+            width:100%;
+        }
+    }
+
+    .concerts{
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        justify-content:center;
+        .concert-card{
+            margin:.5em;
+            padding:1em;
+            background:#f1f2f6;
+            min-width:30em;
+            border-radius:.75em;
+        }
+    }
+}
