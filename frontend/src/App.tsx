@@ -87,7 +87,15 @@ function App() {
                                 return (
                                     concerts[key] && (
                                         <div key={key} className={"concert-card"}>
-                                            {key}: {concerts[key]}
+                                            <img src={concerts[key].images[0].url}/>
+                                            <div>{concerts[key].name}</div>
+                                            <div>{concerts[key].startDate}</div>
+                                            {Object.keys(concerts[key].attractions).map((attraction) => {
+                                                return (
+                                                    <div className={`${concerts[key].attractions[attraction] ? "favorite" : "not-favorite"}`}>{attraction}</div>
+                                                )
+                                            })}
+                                            <a href={concerts[key].url}>TicketMaster</a>
                                         </div>
                                     )
                                 );

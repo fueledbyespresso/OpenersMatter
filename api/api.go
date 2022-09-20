@@ -86,20 +86,15 @@ func getImportantEvents(accessToken string) []events {
 	allEvents := getTicketmasterConcerts()
 	var curatedEvents []events
 	for _, event := range allEvents {
-		tempEvent := events{
-			Name:        event.Name,
-			URL:         event.URL,
-			Attractions: event.Attractions,
-		}
 		hasFavoriteArtist := false
 		for playingArtist := range event.Attractions {
 			if _, isPlaying := allArtists[strings.ToLower(playingArtist)]; isPlaying {
-				tempEvent.Attractions[playingArtist] = true
+				event.Attractions[playingArtist] = true
 				hasFavoriteArtist = true
 			}
 		}
 		if hasFavoriteArtist {
-			curatedEvents = append(curatedEvents, tempEvent)
+			curatedEvents = append(curatedEvents, event)
 		}
 	}
 	return curatedEvents
@@ -138,21 +133,51 @@ type eventsResponseJSON struct {
 }
 
 type eventFieldJSON struct {
-	Name        string `json:"name"`
-	URL         string `json:"url"`
+	Name   string `json:"name"`
+	URL    string `json:"url"`
+	Images []struct {
+		Ratio  string `json:"ratio"`
+		URL    string `json:"url"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+	} `json:"images"`
+	AgeRestrictions struct {
+		LegalAgeEnforced bool `json:"legalAgeEnforced"`
+	} `json:"ageRestrictions"`
 	Attractions struct {
 		Attractions []attractionFieldJSON `json:"attractions"`
+		Venues      []venuesFieldJSON     `json:"venues"`
 	} `json:"_embedded"`
+	Dates struct {
+		Start struct {
+			LocalDate string `json:"localDate"`
+		} `json:"start"`
+	} `json:"dates"`
 }
 
 type attractionFieldJSON struct {
 	Name string `json:"name"`
 }
 
+type venuesFieldJSON struct {
+	Name string `json:"name"`
+	City struct {
+		Name string `json:"name"`
+	} `json:"city"`
+}
+
 type events struct {
-	Name        string `json:"name"`
-	URL         string `json:"url"`
-	Attractions map[string]bool
+	Name   string `json:"name"`
+	URL    string `json:"url"`
+	Images []struct {
+		Ratio  string `json:"ratio"`
+		URL    string `json:"url"`
+		Width  int    `json:"width"`
+		Height int    `json:"height"`
+	} `json:"images"`
+	AgeRestricted bool            `json:"ageRestricted"`
+	Attractions   map[string]bool `json:"attractions"`
+	StartDate     string          `json:"startDate"`
 }
 
 func removeExcessDetails(eventsJSON eventsResponseJSON) []events {
@@ -164,12 +189,17 @@ func removeExcessDetails(eventsJSON eventsResponseJSON) []events {
 			attractions = append(attractions, attraction.Name)
 		}
 		formatted := events{
-			Name:        event.Name,
-			URL:         event.URL,
-			Attractions: make(map[string]bool),
+			Name:          event.Name,
+			URL:           event.URL,
+			Attractions:   make(map[string]bool),
+			AgeRestricted: event.AgeRestrictions.LegalAgeEnforced,
+			StartDate:     event.Dates.Start.LocalDate,
 		}
 		for _, attraction := range attractions {
 			formatted.Attractions[attraction] = false
+		}
+		for _, image := range event.Images {
+			formatted.Images = append(formatted.Images, image)
 		}
 
 		compactEvents = append(compactEvents, formatted)

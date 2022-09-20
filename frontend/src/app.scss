@@ -60,6 +60,13 @@
             background:#f1f2f6;
             min-width:30em;
             border-radius:.75em;
+
+            .favorite{
+                background:#ddd;
+            }
+            img{
+                width: 15em;
+            }
         }
     }
 }
