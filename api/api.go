@@ -70,7 +70,7 @@ func getFollowedArtists(followingArtists *followingJSONResponse, accessToken str
 	}
 }
 
-func getImportantEvents(accessToken string) []events {
+func getImportantEvents(accessToken string, longStr string, latStr string) []events {
 	var topArtists artistsJSONField
 	var followingArtist followingJSONResponse
 
@@ -83,7 +83,7 @@ func getImportantEvents(accessToken string) []events {
 	for _, item := range followingArtist.Artists.Items {
 		allArtists[strings.ToLower(item.Name)] = true
 	}
-	allEvents := getTicketmasterConcerts()
+	allEvents := getTicketmasterConcerts(longStr, latStr)
 	var curatedEvents []events
 	for _, event := range allEvents {
 		hasFavoriteArtist := false
@@ -121,7 +121,10 @@ func getConcerts(db *database.DB) gin.HandlerFunc {
 				c.AbortWithStatusJSON(500, "The server was unable to retrieve school info")
 			}
 		}
-		allEvents := getImportantEvents(accessToken)
+		longitude := c.DefaultQuery("long", "0")
+		latitude := c.DefaultQuery("lat", "0")
+
+		allEvents := getImportantEvents(accessToken, longitude, latitude)
 		c.JSON(200, allEvents)
 	}
 }
@@ -207,9 +210,14 @@ func removeExcessDetails(eventsJSON eventsResponseJSON) []events {
 	return compactEvents
 }
 
-func getTicketmasterConcerts() []events {
+func getTicketmasterConcerts(longStr string, latStr string) []events {
 	var allEvents []events
-	seattle := geohash.Encode(47.5, -122)
+	longitude := float64(0)
+	latitude := float64(0)
+
+	longitude, _ = strconv.ParseFloat(longStr, 32)
+	latitude, _ = strconv.ParseFloat(latStr, 32)
+	seattle := geohash.Encode(latitude, longitude)
 	seattle = seattle[:5]
 
 	for i := 0; i < 3; i++ {

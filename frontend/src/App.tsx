@@ -1,13 +1,16 @@
 import React, {useEffect, useState} from 'react';
+import ReactGoogleAutocomplete from "react-google-autocomplete";
 import './app.scss';
 
 function App() {
     const [user, setUser] = useState<string | null>(null)
     const [loadingConcerts, setLoadingConcerts] = useState<boolean>(false)
     const [concerts, setConcerts] = useState<any | null>(null)
+    const [curPlace, setPlace] = useState<any | null>(null)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
+        console.log(process.env.REACT_APP_GOOGLE_MAPS_API_KEY)
         // Refresh session every 10 minutes
         setInterval(refreshSession, 600000)
         // Listen to localstorage changes
@@ -46,7 +49,7 @@ function App() {
 
     function getConcerts() {
         setLoadingConcerts(true)
-        fetch("/api/v1/concerts")
+        fetch("/api/v1/concerts?long="+curPlace?.geometry.location.lng()+"&lat="+curPlace?.geometry.location.lat())
             .then((res) => {
                 if (res.ok) {
                     setLoadingConcerts(false)
@@ -67,14 +70,14 @@ function App() {
         <div className="App">
             {user ? (
                 <div className={"main"}>
-                    <label>
-                        Longitude
-                        <input placeholder={"Longitude"}/>
-                    </label>
-                    <label>
-                        Latitude
-                        <input placeholder={"Latitude"}/>
-                    </label>
+                    <ReactGoogleAutocomplete
+                        apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+                        onPlaceSelected={(place: any) => {
+                            if(place != undefined){
+                                setPlace(place)
+                            }
+                        }}
+                    />
                     <label>
                         Radius
                         <input placeholder={"Radius"}/>
