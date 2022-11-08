@@ -10,7 +10,7 @@ function App() {
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
-        console.log(process.env.REACT_APP_GOOGLE_MAPS_API_KEY)
+        console.log(process.env)
         // Refresh session every 10 minutes
         setInterval(refreshSession, 600000)
         // Listen to localstorage changes
