@@ -69,21 +69,20 @@ function App() {
         <div className="App">
             {user ? (
                 <div className={"main"}>
-                    <ReactGoogleAutocomplete
-                        apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
-                        onPlaceSelected={(place: any) => {
-                            if(place != undefined){
-                                setPlace(place)
-                            }
-                        }}
-                    />
                     <label>
-                        Radius
-                        <input placeholder={"Radius"}/>
+                        Location
+                        <ReactGoogleAutocomplete
+                            apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
+                            onPlaceSelected={(place: any) => {
+                                if(place != undefined){
+                                    setPlace(place)
+                                }
+                            }}
+                        />
                     </label>
                     {loadingConcerts && <div>Loading Concerts</div>}
 
-                    {concerts && (
+                    {concerts ? (
                         <div className="concerts">
                             {Object.keys(concerts).map((key, val) => {
                                 return (
@@ -103,11 +102,15 @@ function App() {
                                 );
                             })}
                         </div>
+                    ):(
+                        <button onClick={() => getConcerts()}>Find Concerts</button>
+
                     )}
-                    <button onClick={() => getConcerts()}>Find Concerts</button>
                 </div>
             ) : (
-                <a href={"./oauth/v1/login"}>Login</a>
+                <label className="spotify-login-button">
+                    <a href={"./oauth/v1/login"}>Login with Spotify</a>
+                </label>
             )}
         </div>
     );

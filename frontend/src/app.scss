@@ -1,5 +1,6 @@
 .App {
     text-align: left;
+    height: 100vh;
 }
 
 .App-logo {
@@ -36,24 +37,68 @@
         transform: rotate(360deg);
     }
 }
+*{
+    box-sizing: border-box;
+}
+label{
+    margin:.5em;
+    width:100%;
+    max-width: 40em;
+    input{
+        border: .1px #f1f2f6 solid;
+        background: #efefef;
+        width:100%;
+        padding: .5em;
+    }
+}
+button{
+    border: .1em #f1f2f6 solid;
+    padding: .5em 1em;
+    border-radius: .5em;
+}
+
+.spotify-login-button{
+    display: block;
+    border: .2em #1DB954 solid;
+    border-radius: 15em;
+    background: #1DB954;
+    margin: 30vh auto;
+    text-align: center;
+    max-width: 15em;
+    &:hover{
+        background: #fff;
+        a{
+            color: #1DB954;
+        }
+    }
+    a{
+        display: block;
+
+        padding: .5em 1em;
+        color:#fff;
+        font-size: 1.2em;
+    }
+    a:link { text-decoration: none; }
+
+    a:visited { text-decoration: none; }
+
+    a:hover { text-decoration: none; }
+
+    a:active { text-decoration: none; }
+}
 
 .main{
     display: flex;
     flex-flow: column nowrap;
     align-items: center;
-
-    label{
-        width:40em;
-        input{
-            width:100%;
-        }
-    }
+    padding: 1em;
 
     .concerts{
         display: flex;
         flex-flow: row wrap;
         align-items: center;
         justify-content:center;
+
         .concert-card{
             margin:.5em;
             padding:1em;
