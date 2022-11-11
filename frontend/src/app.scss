@@ -55,6 +55,7 @@ button{
     border: .1em #f1f2f6 solid;
     padding: .5em 1em;
     border-radius: .5em;
+    cursor: pointer;
 }
 
 .spotify-login-button{
@@ -73,19 +74,22 @@ button{
     }
     a{
         display: block;
-
         padding: .5em 1em;
         color:#fff;
         font-size: 1.2em;
     }
-    a:link { text-decoration: none; }
 
-    a:visited { text-decoration: none; }
-
-    a:hover { text-decoration: none; }
-
-    a:active { text-decoration: none; }
 }
+a{
+    color: #000;
+}
+a:link { text-decoration: none; }
+
+a:visited { text-decoration: none; color: #000;}
+
+a:hover { text-decoration: none; color: #282c34;}
+
+a:active { text-decoration: none; }
 
 .main{
     display: flex;
@@ -96,21 +100,43 @@ button{
     .concerts{
         display: flex;
         flex-flow: row wrap;
-        align-items: center;
+        align-items: stretch;
         justify-content:center;
 
         .concert-card{
-            margin:.5em;
-            padding:1em;
-            background:#f1f2f6;
-            min-width:30em;
-            border-radius:.75em;
+            margin:.75em;
+            padding:.5em;
+            background:#f1f1f1;
+            min-width:10em;
+            width: 100%;
+            max-width: 20em;
+            border-radius:.5em;
+            box-shadow: 10px 8px #f7e6cd;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
 
+            .tour-name{
+                text-align: center;
+                font-size: 1.2em;
+            }
             .favorite{
-                background:#ddd;
+                text-decoration: underline;
             }
             img{
-                width: 15em;
+                justify-self: flex-start;
+                border-radius:.5em;
+                display: block;
+                height: 10em;
+                width: 100%;
+                object-fit: cover;
+            }
+            a.ticketmaster-link{
+                display: block;
+                margin:auto auto 0 auto;
+                padding: .25em .5em;
+                background: #026cdf;
+                color:#fff;
             }
         }
     }

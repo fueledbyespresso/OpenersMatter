@@ -82,30 +82,30 @@ function App() {
                     </label>
                     {loadingConcerts && <div>Loading Concerts</div>}
 
-                    {concerts ? (
+                    {concerts && (
                         <div className="concerts">
                             {Object.keys(concerts).map((key, val) => {
                                 return (
                                     concerts[key] && (
                                         <div key={key} className={"concert-card"}>
                                             <img src={concerts[key].images[0].url}/>
-                                            <div>{concerts[key].name}</div>
+                                            <div className={"tour-name"}>{concerts[key].name}</div>
                                             <div>{concerts[key].startDate}</div>
-                                            {Object.keys(concerts[key].attractions).map((attraction) => {
-                                                return (
-                                                    <div className={`${concerts[key].attractions[attraction] ? "favorite" : "not-favorite"}`}>{attraction}</div>
-                                                )
-                                            })}
-                                            <a href={concerts[key].url}>TicketMaster</a>
+                                            <div>
+                                                {Object.keys(concerts[key].attractions).map((attraction) => {
+                                                    return (
+                                                        <div className={`${concerts[key].attractions[attraction] ? "favorite" : "not-favorite"}`}>{attraction}</div>
+                                                    )
+                                                })}
+                                            </div>
+                                            <a className="ticketmaster-link" href={concerts[key].url}>TicketMaster</a>
                                         </div>
                                     )
                                 );
                             })}
                         </div>
-                    ):(
-                        <button onClick={() => getConcerts()}>Find Concerts</button>
-
                     )}
+                    <button onClick={() => getConcerts()}>Find Concerts</button>
                 </div>
             ) : (
                 <label className="spotify-login-button">
