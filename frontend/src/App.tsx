@@ -80,7 +80,8 @@ function App() {
                             }}
                         />
                     </label>
-                    {loadingConcerts && <div>Loading Concerts</div>}
+                    {loadingConcerts && <div><div className="loader"></div>Loading Concerts</div>}
+                    <button onClick={() => getConcerts()}>Find Concerts</button>
 
                     {concerts && (
                         <div className="concerts">
@@ -105,12 +106,18 @@ function App() {
                             })}
                         </div>
                     )}
-                    <button onClick={() => getConcerts()}>Find Concerts</button>
                 </div>
             ) : (
-                <label className="spotify-login-button">
-                    <a href={"./oauth/v1/login"}>Login with Spotify</a>
-                </label>
+                <div className="not-logged-in">
+                    <h1>Curated Concerts</h1>
+                    <h2>
+                        Find concerts near you based on your Spotify history!
+                    </h2>
+                    <label className="spotify-login-button">
+                        <a href={"./oauth/v1/login"}>Login with Spotify</a>
+                    </label>
+                    <img src={"/frontpage-screenshot.png"}/>
+                </div>
             )}
         </div>
     );
