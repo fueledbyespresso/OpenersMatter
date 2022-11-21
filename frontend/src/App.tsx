@@ -117,7 +117,7 @@ function App() {
                     </h2>
                     <label className="spotify-login-button">
                         <a href={"./oauth/v1/login"}>
-                            <img src={"/Spotify_icon_RGB_White.png"}/>
+                            <img src={"/Spotify_Icon_RGB_White.png"}/>
                             Login with Spotify
                         </a>
                     </label>
