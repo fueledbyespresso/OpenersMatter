@@ -89,7 +89,9 @@ function App() {
                                 return (
                                     concerts[key] && (
                                         <div key={key} className={"concert-card"}>
-                                            <img src={concerts[key].images[0].url}/>
+                                            <img className={"spotify-logo"} src={"/Spotify_Logo_RGB_Black.png"}/>
+
+                                            <img className="card-header-img" src={concerts[key].images[0].url}/>
                                             <div className={"tour-name"}>{concerts[key].name}</div>
                                             <div>{concerts[key].startDate}</div>
                                             <div>
@@ -114,7 +116,10 @@ function App() {
                         Find concerts near you based on your Spotify history!
                     </h2>
                     <label className="spotify-login-button">
-                        <a href={"./oauth/v1/login"}>Login with Spotify</a>
+                        <a href={"./oauth/v1/login"}>
+                            <img src={"/Spotify_icon_RGB_White.png"}/>
+                            Login with Spotify
+                        </a>
                     </label>
                     <img src={"/frontpage-screenshot.png"}/>
                 </div>

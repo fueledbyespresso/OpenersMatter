@@ -118,7 +118,13 @@ a:active { text-decoration: none; }
             .favorite{
                 text-decoration: underline;
             }
-            img{
+            .spotify-logo{
+                align-items: flex-start;
+                margin:0 auto .25em 0;
+                height: 1.5em;
+                object-fit: contain;
+            }
+            .card-header-img{
                 justify-self: flex-start;
                 border-radius:.5em;
                 display: block;
@@ -178,21 +184,27 @@ a:active { text-decoration: none; }
         max-width: 15em;
         color:#fff;
         transition: all 0.15s ease-in-out;
-
         a{
-            display: block;
+            display: flex;
             padding: .5em 1em;
             color:#fff;
             font-size: 1.2em;
+            flex-flow: row wrap;
+            align-items: center;
+            justify-content: center;
+            img{
+                display: inline-block;
+                height: 1.2em;
+                width: 1.2em;
+            }
             &:visited{
                 color:#fff;
             }
         }
         &:hover{
-            background: #fff;
-            a{
-                color: #1DB954;
-            }
+            border: .2em #fff solid;
+
+            box-shadow: 10px 8px #1DB954;
         }
     }
 }
