@@ -105,7 +105,7 @@ a:active { text-decoration: none; }
             width: 100%;
             max-width: 20em;
             border-radius:.5em;
-            box-shadow: 10px 8px #f7e6cd;
+            box-shadow: 4px 2px #f7e6cd;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -142,7 +142,7 @@ a:active { text-decoration: none; }
                 box-shadow: 6px 4px #026cdf;
 
                 &:hover{
-                    box-shadow: -6px -4px #026cdf;
+                    box-shadow: -4px -2px #026cdf;
                     background: #fff;
                     color:#026cdf;
                 }

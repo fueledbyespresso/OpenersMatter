@@ -91,7 +91,6 @@ function App() {
                                         <div key={key} className={"concert-card"}>
                                             <img className={"spotify-logo"} src={"/Spotify_Logo_RGB_Black.png"}/>
 
-                                            <img className="card-header-img" src={concerts[key].images[0].url}/>
                                             <div className={"tour-name"}>{concerts[key].name}</div>
                                             <div>{concerts[key].startDate}</div>
                                             <div>
