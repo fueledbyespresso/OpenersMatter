@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Routes All the routes created by the package nested in
@@ -219,24 +220,29 @@ func getTicketmasterConcerts(longStr string, latStr string) []events {
 	latitude, _ = strconv.ParseFloat(latStr, 32)
 	seattle := geohash.Encode(latitude, longitude)
 	seattle = seattle[:5]
+	wg := sync.WaitGroup{}
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			var eventsJSON eventsResponseJSON
 
-	for i := 0; i < 3; i++ {
-		var eventsJSON eventsResponseJSON
+			resp, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&page=" + strconv.Itoa(i) + "&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
+			if err != nil {
+				return
+			}
+			contents, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return
+			}
+			err = json.Unmarshal(contents, &eventsJSON)
+			if err != nil {
+				log.Println(err)
+			}
 
-		resp, err := http.Get("https://app.ticketmaster.com/discovery/v2/events.json?size=200&page=" + strconv.Itoa(i) + "&segmentName=Music&geoPoint=" + seattle + "&apikey=" + os.Getenv("TICKETMASTER_KEY"))
-		if err != nil {
-			return []events{}
-		}
-		contents, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return []events{}
-		}
-		err = json.Unmarshal(contents, &eventsJSON)
-		if err != nil {
-			log.Println(err)
-		}
-
-		allEvents = append(allEvents, removeExcessDetails(eventsJSON)...)
+			allEvents = append(allEvents, removeExcessDetails(eventsJSON)...)
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
 	return allEvents
 }

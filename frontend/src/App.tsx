@@ -65,10 +65,27 @@ function App() {
             )
     }
 
+    function logout() {
+        fetch("/oauth/v1/logout")
+            .then(res => res.json())
+            .then(
+                () => {
+                    setUser(null);
+                    localStorage.removeItem("user")
+                }, (error) => {
+                    setUser(null)
+                    localStorage.removeItem("user")
+                }
+            )
+    }
+
     return (
         <div className="App">
             {user ? (
                 <div className={"main"}>
+                    <a onClick={() => logout()} className={"logout-button"}>
+                        Log Out
+                    </a>
                     <label>
                         Location
                         <ReactGoogleAutocomplete
@@ -110,9 +127,9 @@ function App() {
                 </div>
             ) : (
                 <div className="not-logged-in">
-                    <h1>Curated Concerts</h1>
+                    <h1>Concerts Curated</h1>
                     <h2>
-                        Find concerts near you based on your Spotify history!
+                        Concerts near you based on your Spotify history
                     </h2>
                     <label className="spotify-login-button">
                         <a href={"./oauth/v1/login"}>

@@ -26,21 +26,19 @@
     color: white;
 }
 
-.App-link {
-    color: #61dafb;
+.logout-button{
+    display: block;
+    align-self: end;
+    background: #dfdfdf;
+    padding: .25em 1em;
+    border-radius: .2em;
+    cursor: pointer;
+
+    &:hover{
+        background: #efefef;
+    }
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-*{
-    box-sizing: border-box;
-}
 label{
     margin:.5em;
     width:100%;
@@ -70,8 +68,8 @@ a:hover { text-decoration: none; color: #282c34;}
 
 a:active { text-decoration: none; }
 .loader {
-    border: 16px solid #f3f3f3; /* Light grey */
-    border-top: 16px solid #3498db; /* Blue */
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #026cdf; /* Blue */
     border-radius: 50%;
     width: 60px;
     height: 60px;
@@ -160,11 +158,12 @@ a:active { text-decoration: none; }
     h1{
         font-size: 1.5em;
         text-align: center;
+        color: #493657;
     }
     h2{
         font-size: 1.2em;
         text-align: center;
-        color: #2C423F;
+        color: #E83151;
     }
     img{
         display: block;
@@ -179,7 +178,7 @@ a:active { text-decoration: none; }
         border: .2em #1DB954 solid;
         border-radius: 15em;
         background: #1DB954;
-        margin: 4em auto;
+        margin: 2em auto;
         text-align: center;
         max-width: 15em;
         color:#fff;
@@ -193,6 +192,7 @@ a:active { text-decoration: none; }
             align-items: center;
             justify-content: center;
             img{
+                margin: 0 .5em 0 0;
                 display: inline-block;
                 height: 1.2em;
                 width: 1.2em;
@@ -203,7 +203,6 @@ a:active { text-decoration: none; }
         }
         &:hover{
             border: .2em #fff solid;
-
             box-shadow: 10px 8px #1DB954;
         }
     }
