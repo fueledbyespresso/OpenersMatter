@@ -221,7 +221,7 @@ func getTicketmasterConcerts(longStr string, latStr string) []events {
 	seattle := geohash.Encode(latitude, longitude)
 	seattle = seattle[:5]
 	wg := sync.WaitGroup{}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 6; i++ {
 		wg.Add(1)
 		go func(i int) {
 			var eventsJSON eventsResponseJSON
